@@ -1,0 +1,4 @@
+interface:
+  display_name: "研途Frame"
+  short_description: "药物临床研发工作中的专业表达、结构重整、中英沟通与留痕；忠实保留已给事实及判断，不代替研发决策"
+  default_prompt: "请用 $yantu-frame 帮我完成当前药物研发任务。"

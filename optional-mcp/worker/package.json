@@ -1,0 +1,31 @@
+{
+  "name": "yantu-scout-mcp",
+  "version": "0.2.1",
+  "private": true,
+  "type": "module",
+  "description": "研途Scout ClinicalTrials.gov MCP：字段筛选、模块读取与有界分页",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "wrangler dev --local --ip 127.0.0.1 --port 8787",
+    "check": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "deploy": "wrangler deploy",
+    "smoke": "node --import tsx scripts/smoke.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.0.0",
+    "agents": "0.24.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20260926.1",
+    "@modelcontextprotocol/client": "2.0.0",
+    "@types/node": "24.19.0",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "wrangler": "4.141.0"
+  }
+}

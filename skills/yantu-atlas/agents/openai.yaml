@@ -1,0 +1,4 @@
+interface:
+  display_name: "研途Atlas"
+  short_description: "药物临床研发的文献、指南、机制及证据质量检索与摘要"
+  default_prompt: "请用 $yantu-atlas 帮我完成当前药物研发任务。"

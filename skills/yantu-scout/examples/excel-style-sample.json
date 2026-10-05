@@ -1,0 +1,38 @@
+{
+  "title": "研途Scout Excel样式示例（全部为虚构数据）",
+  "sheets": [
+    {
+      "name": "研究表样式示例",
+      "columns": [
+        {"name":"研究编号","type":"text","width":23},
+        {"name":"研究阶段","type":"text","width":16},
+        {"name":"受试人群与设计","type":"text","width":45},
+        {"name":"总入组人数","type":"number","width":18,"numberFormat":"#,##0"},
+        {"name":"入组数属性","type":"text","width":16},
+        {"name":"疗效结果及口径","type":"text","width":52},
+        {"name":"来源","type":"text","width":28}
+      ],
+      "rows": [
+        ["DEMO-001","II期","虚构成人队列；随机、双盲、平行对照。",120,"ACTUAL","虚构样例：第24周，干预组与对照组分别为−10.2%和−3.1%。\n保留观察期、分析集、分母和模型估计的区别。",{"value":"[1] 样式演示链接","url":"https://clinicaltrials.gov/"}],
+        ["DEMO-002","III期","虚构人群；展示长文本自动换行、顶端对齐和充分行高。",360,"ESTIMATED","未读取；不得将尚未读取的数据写成未公开。",{"value":"[1] 样式演示链接","url":"https://clinicaltrials.gov/"}],
+        ["DEMO-003","I期","虚构特殊人群；保留关键信息，不因列宽缩短医学口径。",48,"ACTUAL","未公开",{"value":"[1] 样式演示链接","url":"https://clinicaltrials.gov/"}],
+        ["DEMO-004","II期","虚构队列；本文件仅展示输出样式。",200,"ESTIMATED","不适用",{"value":"[1] 样式演示链接","url":"https://clinicaltrials.gov/"}]
+      ]
+    },
+    {
+      "name": "类型与缺失示例",
+      "columns": [
+        {"name":"编号","type":"text","width":23},
+        {"name":"日期","type":"date","width":18},
+        {"name":"人数","type":"number","width":16},
+        {"name":"比例","type":"percent","width":16},
+        {"name":"说明","type":"text","width":58}
+      ],
+      "rows": [
+        ["000012","2026-09-26",0,0.125,"虚构测试：保留前导0、真实0、日期与百分比类型。"],
+        ["DEMO-005","2026-09","未公开","未读取","虚构测试：只到月的日期保留原始精度；缺失不填0。"],
+        ["DEMO-006","2026-09-26",null,null,"=这是一段按字面保存的文本，不是公式"]
+      ]
+    }
+  ]
+}

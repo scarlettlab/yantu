@@ -1,0 +1,4 @@
+interface:
+  display_name: "研途Guide"
+  short_description: "药物临床开发中的独立判断与取舍：方案、人群、剂量、安全性、监管和研究执行"
+  default_prompt: "请用 $yantu-guide 帮我完成当前药物研发任务。"

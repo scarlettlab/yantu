@@ -1,0 +1,28 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "yantu",
+  "version": "1.0.0",
+  "description": "面向药物临床研发的六技能工作流：证据、系统情报、研发判断、数据核查、工作沟通和正式写作。Scout 支持官方 API 直连及选配 MCP。",
+  "author": {
+    "name": "研途"
+  },
+  "license": "LicenseRef-Yantu-Internal-Use-1.0",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "研途",
+        "shortDescription": "药物临床研发六技能，直连取数与选配 MCP",
+        "longDescription": "面向 Clinical Scientist、Medical Monitor 及药物临床研发团队，提供证据检索、试验调研、研发判断、数据核查、沟通和写作六个技能。可按需独立安装或整套使用；Scout 支持官方 API 直连及选配 MCP。",
+        "developerName": "研途",
+        "category": "Productivity",
+        "capabilities": [
+          "Interactive"
+        ],
+        "defaultPrompt": [
+          "帮我梳理一个药物临床研发问题的证据、判断和下一步。",
+          "用 Scout 调研指定药物的开发路径，先明确范围和可用数据来源。"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "研途Draft"
+  short_description: "药物临床研发正式写作：方案、IB、CSR、CTD 临床材料、安全性材料及研发相关论文"
+  default_prompt: "请用 $yantu-draft 帮我完成当前药物研发任务。"

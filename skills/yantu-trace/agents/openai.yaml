@@ -1,0 +1,4 @@
+interface:
+  display_name: "研途Trace"
+  short_description: "药物临床研发的独立数据整理、统计、跨表一致性和对账核查，保留单位、分母、分析集及证据状态"
+  default_prompt: "请用 $yantu-trace 帮我完成当前药物研发任务。"

@@ -1,0 +1,153 @@
+# ClinicalTrials 字段与医学口径参考
+
+取数入口和参数以 data-access.md 与实际工具 schema 为准；本文件只保留字段、日期、跨源补检等业务规则。
+
+### 2) 关键字段映射（JSON路径 → 输出字段）
+
+| 输出字段     | JSON路径                                                       | 备注                                                  |
+| -------- | ------------------------------------------------------------ | --------------------------------------------------- |
+| 研究开始时间   | `protocolSection.statusModule.startDateStruct`               | 含 date(YYYY-MM-DD或YYYY-MM) 和 type(Actual/Estimated) |
+| 主要终点完成时间 | `protocolSection.statusModule.primaryCompletionDateStruct`   | Primary Completion Date，含 date/type                 |
+| 研究完成时间   | `protocolSection.statusModule.completionDateStruct`          | Study Completion Date，含 date/type                   |
+| 样本量      | `protocolSection.designModule.enrollmentInfo`                | 含 count 和 type(ACTUAL/ESTIMATED)，保留原值                  |
+| 治疗组信息    | `protocolSection.armsInterventionsModule.armGroups[]`        | 数组：label/type/description/interventionNames         |
+| 干预措施     | `protocolSection.armsInterventionsModule.interventions[]`    | 药物剂量/频率/途径信息                                        |
+| 主要终点     | `protocolSection.outcomesModule.primaryOutcomes[]`           | 数组：measure/timeFrame/description                    |
+| 次要终点     | `protocolSection.outcomesModule.secondaryOutcomes[]`         | 可选                                                  |
+| 纳入排除标准   | `protocolSection.eligibilityModule.eligibilityCriteria`      | 可选                                                  |
+| 最后更新发布时间 | `protocolSection.statusModule.lastUpdatePostDateStruct.date` | 用于标注数据版本(YYYY-MM-DD)                                |
+| 研究类型     | `protocolSection.designModule.studyType`                     | 干预性/观察性等                                            |
+| 试验地点     | `protocolSection.contactsLocationsModule.locations[]`        | 判断多国研究及国家分布                                         |
+
+### 字段安全提取规范（强制）
+API返回的JSON为多层嵌套结构，任一层级都可能缺失。提取字段时必须遵循以下规则：
+1) **逐层安全访问**：提取每个字段时，检查路径各层是否存在且类型正确；Python 中显式为 None 的中间层不能只靠 `.get(key, {})` 处理。结构异常单独报告，不伪装成正常空字段
+2) **空值处理**：已成功读取的注册记录中字段为 null 或不存在时，输出“本次注册记录未提供”；未读取和请求失败另行标记。是否在其他来源公开须补检后判断
+3) **数组字段处理**：`armGroups[]`、`interventions[]`、`primaryOutcomes[]`、`locations[]` 等数组字段，先确认类型再遍历。区分空数组、缺字段、未读取和结构异常，不把这些状态自动等同于客观未公开
+4) **禁止硬编码路径直接访问**：禁止使用如 `study['protocolSection']['statusModule']['startDateStruct']['date']` 这样的直接深层索引，必须每一层都做存在性检查
+示例（Python伪代码）：
+`start_date = (((study.get('protocolSection') or {}).get('statusModule') or {}).get('startDateStruct') or {}).get('date')`（适用于各中间层已核对为对象或 null 的记录）
+
+---
+
+### 3) 输出时必须标注
+- 时间字段：直接输出日期（YYYY-MM-DD）；若仅返回 YYYY-MM，如实输出
+- 样本量：直接输出数值（如：`156人`、`200人`）
+- 必须注明最后更新发布时间（YYYY-MM-DD）
+- 给出API访问链接对应的 ClinicalTrials.gov 访问链接，供用户复现（仅在引用清单中给完整链接，正文用角标）
+
+---
+
+### 4) 容错规则
+
+#### HTTP状态码处理
+- **200**：正常提取数据
+- **404**：本次接口未找到该编号；不据此判断撤回或其他来源不存在
+- **429（速率限制）**：遵循实际 Retry-After 与宿主限制；记录失败及续取位置，只有实际重试才写已重试，不把限流后的部分取数当完成
+- **其他非200**：保留错误；如有其他已验证通道可切换，否则用实际可访问网页或用户资料限定处理，并说明缺口
+
+#### 批量调用的速率控制（强制）
+- 连续取单研究详情时，每5次请求后主动暂停2秒；仍遵循实际 Retry-After 与宿主限制，不保证此间隔足以避免限流
+- 若NCT号清单超过30条，分批执行（每批10-15条），批次间暂停5秒
+- 每次调用均需记录返回状态（成功/失败/限流重试），纳入检索日志
+
+#### 字段级容错
+- API返回的字段为 null 或路径不存在：标记本次注册库字段缺失；按要求补检其他来源，不把未读取或缺字段直接断言为客观未公开
+- 日期仅有年月/年份：按实际返回格式输出，并注明精度不足（如"原始数据仅精确到年月"）
+- API调用失败导致某试验完全无法获取数据：在对应表格行的备注列注明"API调用失败"，并给出用户可自行验证的链接（仅在引用清单中）
+
+---
+
+### 5) 内部检索记录要求（默认不展示）
+在第1轮或第2轮中必须内部记录：
+- API调用入口或可复现链接
+- API返回状态（成功/失败/部分字段缺失）
+- 提取到的关键字段清单
+- 若有缺失，说明备选来源
+
+最终输出默认不展示本节；仅当用户明确要求可复现检索过程时，才附加简版检索日志。
+
+示例（第1轮内部检索记录）：
+- 关键词：NCT05759897
+- 单研究读取：直连 `--mode study --nct NCT05759897`，或 MCP 的单研究工具（按实际 schema）
+- 返回状态：成功
+- 提取字段：开始时间✓ 结束时间✓ 样本量✓ 治疗组信息✓
+- 缺失字段：每组实际人数（需从论文补齐）
+- 用户可复现链接：https://clinicaltrials.gov/study/NCT05759897
+
+---
+
+### 6) 批量检索时的处理（强制两步流程）
+- **第一步（召回）**：通过直连 search 或 MCP 搜索工具获取 NCT 清单，参数映射见 data-access.md
+  - 检索摘要用于确定候选，不能用摘要推断未返回的研究字段
+- **第二步（逐条回填，强制）**：逐个 NCT 核对相应完整研究记录或所需模块，提取日期、样本量、治疗组等字段。直连可读已保存的同版本完整 JSON，或运行 study；MCP 按需读单研究模块及全部续页
+  - `startDateStruct`、`primaryCompletionDateStruct`、`completionDateStruct` 必须从该研究的实际字段提取；不得推断，缺失保留状态
+  - 若单条API调用失败，在对应单元格注明"API调用失败"并在备注列说明，不得写"未公开"
+- **禁止跳过第二步**：即使试验数量较多，也必须逐条核对所需记录；若超过20条，可分批执行。已保存的同版本完整记录可复用，无需为满足工具名而重复下载
+
+---
+
+### 7) 日期处理特殊规则
+- 目标格式：YYYY-MM-DD
+- 返回YYYY-MM：输出 `2021-03（原始数据仅精确到年月）`
+- 返回YYYY：输出 `2021（原始数据仅精确到年）`
+- 日期缺失：已读记录缺字段时输出“本次注册记录未提供”；未读取、请求失败和结构异常分开说明
+- 引用来源清单中，对于无法确定发布日期的，则必须记录访问日期（Accessed on YYYY-MM-DD）
+
+---
+
+### 8) 多国多中心研究（MRCT）判断
+从 `protocolSection.contactsLocationsModule.locations[]`：
+- 提取国家（country字段）
+- location包含 ≥2 个国家 → 多国研究 = 是
+- 特别标注是否包含中国（CN）、美国（US）、欧洲国家
+- 列出主要参与国家/地区
+
+示例输出：
+- 多国研究：是[1](#)
+- 国家分布：美国（15个中心）、中国（8个中心）、德国（5个中心）、法国（3个中心）[1](#)
+
+---
+
+### 9) 表格字段多源补充（强制）
+
+#### 第一步：检查API返回中的 resultsSection
+
+检查该 NCT 完整 JSON 中的 `resultsSection`；若使用字段投影或 MCP 摘要，先读取结果索引与对应模块，不能把摘要未带出结果当作结果不存在。已提交到注册库的结果可能包含：
+- 基线特征数据：`resultsSection.baselineCharacteristicsModule`
+- 主要/次要终点结果数据：`resultsSection.outcomeMeasuresModule.outcomeMeasures[]`（含具体数值、统计分析、置信区间）
+- 不良事件数据：`resultsSection.adverseEventsModule`（含SAE、其他AE的频率与具体事件）
+- 受试者流程：`resultsSection.participantFlowModule`（含各组实际入组/完成/退出人数）
+- PK/PD相关结果数据：如以 outcome measure 或 clinical pharmacology endpoint 形式发布的 Cmax、AUC、Tmax、t1/2、暴露-剂量关系等
+
+**执行规范**：
+- 对每个 NCT 号，基于完整 JSON 或专门结果模块检查是否有注册结果，不由检索摘要缺字段推断
+- 若 `resultsSection` 存在：优先从中提取疗效、安全、PK、受试者流程等数据填入表格，来源标注为"ClinicalTrials.gov结果数据[n]"
+- 若 `resultsSection` 不存在（大多数进行中或未发布结果的试验）：进入第二步二次检索
+
+#### 第二步：二次文献检索补充（对resultsSection不存在或数据不完整的试验，强制执行）
+
+对以下字段，若 `resultsSection` 中无数据或数据不完整，必须执行二次检索补充：
+
+**必须二次检索的字段：**
+- 《试验研究模式》附件第G节 - 队列情况（每组用药剂量、实际入组人数、实际分配比例等）
+- 《试验研究模式》附件第G节 - 疗效信息 / 《竞争格局模式》附件第K节 - 关键疗效数据（主要终点结果、关键数值、置信区间、p值等）
+- 《试验研究模式》附件第G节 - 安全信息 / 《竞争格局模式》附件第K节 - 关键安全信号（停药/减量率；TEAE、TRAE、SAE、AESI）
+- 《试验研究模式》附件第G节 - PK信息 / PK结果（Cmax、AUC、Tmax、t1/2、CL/F、Vd/F、蓄积比、暴露-剂量关系；尤其适用于I期、SAD、MAD、DDI、食物影响、肝/肾功能损伤、临床药理学研究）
+
+**二次检索来源优先级（逐级降级）：**
+1) 同行评审期刊全文（PubMed/Google Scholar检索）
+2) 会议摘要/海报/口头报告（ASCO/AACR/ESMO/ASH等）
+3) 公司公开材料（新闻稿/投资者材料/财报）
+4) 二手报道（仅作线索，需回溯原文）
+
+**执行规范：**
+- 对表中每一条试验，至少用"NCT号+药名"和"药名+适应症+phase+results/efficacy/safety/pharmacokinetics/PK"两组关键词做网络检索；I期或临床药理学研究应额外加入"Cmax/AUC/Tmax/half-life"等PK关键词
+- 找到数据后，必须在对应单元格填入具体数值，并同时保留可点击网页链接与来源角标[n]
+- 确认检索后仍无公开数据，才可填"未公开"
+- 禁止仅因API返回中无疗效/安全/PK字段就直接填"未公开"而跳过网络检索
+
+**内部记录要求：**
+- 在内部检索记录中记录二次检索的关键词与来源
+- 标注每条试验的疗效/安全/PK数据最终来源（API/期刊/会议/公司公开/未公开）
+- 最终输出默认不展示该记录

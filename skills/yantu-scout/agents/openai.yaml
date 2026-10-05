@@ -1,0 +1,4 @@
+interface:
+  display_name: "研途Scout"
+  short_description: "药物临床开发的系统情报调研：全面扫描、试验深挖、开发路径复盘、靶点格局和疾病研发扫描"
+  default_prompt: "请用 $yantu-scout 帮我完成当前药物研发任务。"
